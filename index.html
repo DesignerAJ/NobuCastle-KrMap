@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>노부나가의 야망: 신생 한국어 성 지도</title>
+
+    <!-- Mapbox GL JS -->
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Noto+Sans+KR:wght@300;400;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Favicon error fix -->
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+</head>
+
+<body>
+    <!-- 지도 컨테이너 -->
+    <div id="map"></div>
+
+    <!-- 사이드바 패널 -->
+    <aside class="sidebar">
+        <header>
+            <h1>信長の野望･新生 | 城 MAP</h1>
+            <p>노부나가의 야망･신생 | 한국어 성 지도</p>
+        </header>
+
+
+        <!-- 검색 섹션 -->
+        <section class="search-section">
+            <div class="search-container">
+                <input type="text" id="castle-search" placeholder="성 이름으로 검색 (예: 오사카, 小谷)" autocomplete="off">
+                <span class="search-icon">🔍</span>
+            </div>
+        </section>
+
+        <!-- 설정 섹션 -->
+        <section class="settings-section">
+            <div class="setting-item">
+                <span class="setting-label">확대시 성 이름 표시</span>
+                <label class="switch">
+                    <input type="checkbox" id="label-toggle" checked>
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </section>
+
+        <section class="filter-section">
+            <h3>지방별 필터</h3>
+            <div class="region-list">
+                <!-- JavaScript에서 동적으로 생성됨 -->
+                <div class="loading-spinner">데이터를 불러오는 중...</div>
+            </div>
+        </section>
+
+        <footer
+            style="margin-top: auto; text-align: center; padding-top: 20px; font-size: 11px; color: var(--text-secondary);">
+            <p>© 2026 Nobunaga's Ambition: Shinsei KR Map by AJ.</p>
+        </footer>
+    </aside>
+
+    <!-- 도구 설명 또는 범례 (필요시 추가) -->
+
+    <!-- Application Logic -->
+    <script type="module" src="js/app.js"></script>
+</body>
+
+</html>
