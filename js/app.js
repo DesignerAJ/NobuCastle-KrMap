@@ -1,12 +1,9 @@
 // firebase-config.js에서 내보낸 변수들을 가져옵니다.
 import { fetchMapboxToken } from './firebase-config.js';
 import {
-    REGION_MAP,
-    REGION_COLORS,
-    REGION_GROUPS,
+    REGION_DATA,
     PROVINCE_TO_REGION,
-    PROVINCE_KO_MAP,
-    LABEL_ADJUSTMENTS
+    PROVINCE_DATA
 } from './map-data.js';
 
 const MAPBOX_ACCESS_TOKEN = await fetchMapboxToken();
@@ -96,7 +93,7 @@ function renderMarkers(data) {
                 ${castle['현재 명칭'] ? `<div class="current-name" style="font-size: 11px; color:#aaa; margin-top:4px; border-top: 1px solid var(--glass-border); padding-top:4px;">현: ${castle['현재 명칭']}</div>` : ''}
             </div>
             <div class="popup-body">
-                <div class="item"><span class="label">지방</span><span class="val">${REGION_MAP[castle['지방']] || castle['지방']}</span></div>
+                <div class="item"><span class="label">지방</span><span class="val">${REGION_DATA[castle['지방']]?.name || castle['지방']}</span></div>
                 <div class="item"><span class="label">타입</span><span class="val">${castle['성 타입']}</span></div>
                 <div class="item"><span class="label">고쿠다카</span><span class="val">${castle['고쿠다카'].toLocaleString()}</span></div>
                 <div class="item"><span class="label">내구도</span><span class="val">${castle['내구도'].toLocaleString()}</span></div>
@@ -148,8 +145,8 @@ function renderFilters() {
 
     regions.forEach(region => {
         const count = castleData.filter(c => c.지방 === region).length;
-        const color = REGION_COLORS[region] || '#ccc'; // 색상 설정에서 가져옴
-        const btn = createFilterBtn(REGION_MAP[region] || region, count, color);
+        const color = REGION_DATA[region]?.color || '#ccc'; // 색상 설정에서 가져옴
+        const btn = createFilterBtn(REGION_DATA[region]?.name || region, count, color);
 
         btn.addEventListener('click', () => {
             setActiveFilter(btn);
@@ -238,7 +235,7 @@ async function loadProvincialBoundaries() {
 
             // 데이터 오염 방지를 위한 국명(nameKey) 정규화 (한자 단일화)
             let nameKey = feature.properties['国명'] || feature.properties['国名'] || '';
-            const koNameCandidate = PROVINCE_KO_MAP[nameKey] || '';
+            const koNameCandidate = PROVINCE_DATA[nameKey]?.koName || '';
 
             feature.properties['ja_name'] = nameKey ? nameKey + '国' : '';
             feature.properties['ko_name'] = koNameCandidate ? koNameCandidate + '국' : '';
@@ -246,7 +243,7 @@ async function loadProvincialBoundaries() {
             // 지방(Region) 및 색상 할당
             const region = PROVINCE_TO_REGION[nameKey] || '';
             feature.properties['region'] = region;
-            feature.properties['color'] = REGION_COLORS[region] || '#ffffff';
+            feature.properties['color'] = REGION_DATA[region]?.color || '#ffffff';
 
             const jaName = nameKey;
 
@@ -283,9 +280,9 @@ async function loadProvincialBoundaries() {
                     let finalCoords = [centerX / pointCount, centerY / pointCount];
 
                     // 개별 보정값 적용
-                    if (LABEL_ADJUSTMENTS[jaName]) {
-                        finalCoords[0] += LABEL_ADJUSTMENTS[jaName][0];
-                        finalCoords[1] += LABEL_ADJUSTMENTS[jaName][1];
+                    if (PROVINCE_DATA[jaName]?.offset) {
+                        finalCoords[0] += PROVINCE_DATA[jaName].offset[0];
+                        finalCoords[1] += PROVINCE_DATA[jaName].offset[1];
                     }
 
                     processedNames.set(jaName, {
@@ -307,12 +304,6 @@ async function loadProvincialBoundaries() {
         map.addSource('provincial-boundaries', {
             type: 'geojson',
             data: data
-        });
-
-        // 레이블 전용 포인트 소스 추가
-        map.addSource('provincial-label-points', {
-            type: 'geojson',
-            data: { type: 'FeatureCollection', features: labelFeatures }
         });
 
         // 경계선 외곽선 추가
@@ -339,34 +330,15 @@ async function loadProvincialBoundaries() {
             }
         }, 'provincial-line');
 
-        // 영역 이름 레이블 추가 (단일 포인트 소스를 사용하여 중복 완벽 차단)
-        map.addLayer({
-            'id': 'provincial-labels',
-            'type': 'symbol',
-            'source': 'provincial-label-points',
-            'layout': {
-                'text-field': [
-                    'format',
-                    ['get', 'ja_name'], { 'font-scale': 1.2 },
-                    '\n', {},
-                    ['concat', '(', ['get', 'ko_name'], ')'], { 'font-scale': 0.8 }
-                ],
-                'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
-                'text-size': [
-                    'interpolate',
-                    ['exponential', 1.5],
-                    ['zoom'],
-                    4, 4,
-                    8, 18,
-                    12, 48
-                ],
-                'text-allow-overlap': false,
-                'text-anchor': 'center'
-            },
-            'paint': {
-                'text-color': '#ddd',
-                'text-opacity': 0.2
-            }
+        // 영역 이름 HTML 마커 추가 (Mapbox 레이어 대신 HTML 태그 사용)
+        labelFeatures.forEach(feature => {
+            const el = document.createElement('div');
+            el.className = 'province-label';
+            el.innerHTML = `${feature.properties.ja_name}<br><span class="ko-name">(${feature.properties.ko_name})</span>`;
+
+            new mapboxgl.Marker({ element: el })
+                .setLngLat(feature.geometry.coordinates)
+                .addTo(map);
         });
 
     } catch (error) {
@@ -400,6 +372,18 @@ map.on('load', () => {
         }
         mapContainer.style.setProperty('--label-opacity', opacity);
         mapContainer.style.setProperty('--label-scale', scale);
+
+        // 국명 마커 폰트 스케일 (줌 레벨 연동)
+        // zoom 4 -> 4px, zoom 8 -> 18px, zoom 12 -> 48px
+        let provFontSize = 18;
+        if (zoom <= 4) {
+            provFontSize = 4;
+        } else if (zoom <= 8) {
+            provFontSize = 4 + ((zoom - 4) / 4) * 14;
+        } else {
+            provFontSize = 18 + ((Math.min(zoom, 12) - 8) / 4) * 30;
+        }
+        mapContainer.style.setProperty('--prov-font-size', `${provFontSize}px`);
     };
 
     map.on('zoom', toggleLabels);

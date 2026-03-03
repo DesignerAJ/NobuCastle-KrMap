@@ -52,8 +52,10 @@ body {
 }
 
 header h1 {
-    font-size: 24px;
-    font-weight: 600;
+    font-size: 36px;
+    font-weight: 500;
+    font-family: 'Yuji Mai', serif;
+    text-align: center;
     margin-bottom: 4px;
     background: linear-gradient(45deg, #fff, var(--title-accent-color));
     -webkit-background-clip: text;
@@ -64,6 +66,7 @@ header h1 {
 header p {
     color: var(--text-secondary);
     font-size: 14px;
+    text-align: center;
     margin-bottom: 24px;
 }
 
@@ -321,8 +324,9 @@ input:checked+.slider:before {
     margin-bottom: 6px;
     /* 마커와 레이블 간격 */
     white-space: nowrap;
-    font-size: 9px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 400;
+    font-family: 'Yuji Mai', serif;
     color: #fff;
     text-align: center;
     pointer-events: none;
@@ -333,13 +337,29 @@ input:checked+.slider:before {
         -0.2px 0.2px 0 rgba(0, 0, 0, 0.6),
         0.2px 0.2px 0 rgba(0, 0, 0, 0.6),
         0px 0px 2px rgba(0, 0, 0, 0.6);
-    line-height: 1.1;
+    line-height: 0.8;
     transition: opacity 0.1s linear;
 }
 
 .castle-label .ko-name {
-    font-size: 7px;
+    font-size: 8px;
     font-weight: 300;
+    font-family: var(--font-main);
+}
+
+/* 국명 마커 레이블 스타일 */
+.province-label {
+    font-family: 'Yuji Mai', serif;
+    font-size: var(--prov-font-size, 18px);
+    color: rgba(221, 221, 221, 0.2);
+    text-align: center;
+    pointer-events: none;
+    line-height: 1;
+}
+
+.province-label .ko-name {
+    font-family: var(--font-main);
+    font-size: 0.7em;
 }
 
 /* Popup Styles */
